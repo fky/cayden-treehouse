@@ -1,0 +1,110 @@
+name: Rebuild Index
+
+on:
+  push:
+    paths:
+      - 'games.json'   # 只在 games.json 变动时触发
+  workflow_dispatch:   # 也可以手动触发
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # 需要写权限来 commit index.html
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Rebuild index.html from games.json
+        run: |
+          python3 << 'PYEOF'
+          import json, datetime
+
+          with open('games.json', 'r', encoding='utf-8') as f:
+              games = json.load(f)
+
+          cards = ''
+          for g in games:
+              name = g.get('name', '未命名游戏')
+              slug = g.get('slug', '')
+              url  = f"games/{slug}/"
+              cards += f'''
+            <a class="game-card" href="{url}">
+              <div class="game-icon">🎮</div>
+              <div class="game-name">{name}</div>
+            </a>'''
+
+          count = len(games)
+          now   = datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')
+
+          html = """<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>🌳 Cayden's Treehouse</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Helvetica Neue', sans-serif;
+    background: #0f0f2e;
+    color: #f0eeff;
+    min-height: 100vh;
+    padding: 48px 24px;
+  }
+  .header { text-align: center; margin-bottom: 48px; }
+  .header h1 { font-size: 2.4rem; font-weight: 900; letter-spacing: -0.5px; }
+  .header p { margin-top: 8px; color: rgba(240,238,255,0.5); font-size: 0.95rem; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 16px;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  .game-card {
+    background: #1e1e42;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px;
+    padding: 28px 16px 20px;
+    text-align: center;
+    text-decoration: none;
+    color: #f0eeff;
+    transition: transform 0.15s, border-color 0.15s;
+    display: block;
+  }
+  .game-card:hover { transform: translateY(-4px); border-color: rgba(255,255,255,0.2); }
+  .game-icon { font-size: 2.8rem; margin-bottom: 12px; }
+  .game-name { font-size: 0.9rem; font-weight: 700; line-height: 1.3; }
+  .empty { text-align: center; color: rgba(240,238,255,0.3); margin-top: 80px; }
+  .footer { text-align: center; margin-top: 48px; color: rgba(240,238,255,0.2); font-size: 0.75rem; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>🌳 Cayden's Treehouse</h1>
+  <p>Cayden 的游戏小屋 &middot; COUNT_PLACEHOLDER 个游戏</p>
+</div>
+CARDS_PLACEHOLDER
+<div class="footer">最后更新：TIME_PLACEHOLDER</div>
+</body>
+</html>"""
+
+          grid = '<div class="grid">' + cards + '\n</div>' if games else '<div class="empty">还没有游戏，快去创建第一个吧！🎮</div>'
+          html = html.replace('COUNT_PLACEHOLDER', str(count))
+          html = html.replace('CARDS_PLACEHOLDER', grid)
+          html = html.replace('TIME_PLACEHOLDER', now)
+
+          with open('index.html', 'w', encoding='utf-8') as f:
+              f.write(html)
+
+          print(f"Rebuilt index.html with {count} games")
+          PYEOF
+
+      - name: Commit and push
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --cached --quiet && echo "No changes to commit" || (git commit -m "chore: rebuild index from games.json" && git push)
