@@ -1,0 +1,11 @@
+{
+  "name": "cayden-treehouse",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/rebuild-index/index.mjs"
+  },
+  "dependencies": {
+    "ejs": "^3.1.10"
+  }
+}

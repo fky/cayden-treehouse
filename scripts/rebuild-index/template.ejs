@@ -44,18 +44,20 @@
 <body>
 <div class="header">
   <h1>🌳 Cayden's Treehouse</h1>
-  <p>Cayden 的游戏小屋 &middot; 1 个游戏</p>
+  <p>Cayden 的游戏小屋 &middot; <%= games.length %> 个游戏</p>
 </div>
-
+<% if (games.length === 0) { %>
+<div class="empty">还没有游戏，快去创建第一个吧！🎮</div>
+<% } else { %>
 <div class="grid">
-
-  <a class="game-card" href="games/tree-puzzle/">
-    <div class="game-icon">🎮</div>
-    <div class="game-name">种树小游戏</div>
+<% games.forEach(function(g) { %>
+  <a class="game-card" href="games/<%= g.slug %>/">
+    <div class="game-icon"><%= g.icon || '🎮' %></div>
+    <div class="game-name"><%= g.name || '未命名游戏' %></div>
   </a>
-
+<% }); %>
 </div>
-
-<div class="footer">最后更新：2026-05-19 10:39 UTC</div>
+<% } %>
+<div class="footer">最后更新：<%= updatedAt %></div>
 </body>
 </html>
