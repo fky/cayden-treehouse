@@ -1,6 +1,11 @@
 [
   {
-    "name": "测试游戏",
+    "name": "种树小游戏",
+    "slug": "tree-puzzle",
+    "publishedAt": "2026-05-19T08:47:37.493Z"
+  },
+  {
+    "name": "æµè¯æ¸¸æ",
     "slug": "test-game",
     "publishedAt": "2026-05-19T06:21:19.981Z"
   }
